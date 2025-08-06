@@ -1,7 +1,2 @@
-const text = 'hello world'
+const obj = { task: 'task', taskList: [] }
 
-if (text.trim() == '') {
-    console.log('rong')
-} else {
-    console.log('not rong')
-}

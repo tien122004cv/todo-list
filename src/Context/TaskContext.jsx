@@ -1,4 +1,5 @@
-import { createContext, useState } from "react";
+import axios from "axios";
+import { createContext, useEffect, useRef, useState } from "react";
 import uuid from "react-uuid";
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -8,49 +9,82 @@ const TaskContextProvider = ({ children }) => {
     const [inputTask, setInputTask] = useState('')
     const [taskList, setTaskList] = useState([])
     const [btnStatus, setBtnStatus] = useState('Add task')
-    const [idEdit, setIdEdit] = useState(null)
+    const [taskEdit, setTaskEdit] = useState({})
+    const inputRef = useRef(null)
+    const URL_API_TASKS = "http://localhost:3000/tasks"
 
     function handleSubmit(e) {
         e.preventDefault()
         if (!inputTask.trim()) return
-        btnStatus === 'Update' ? handleEdit() : handleAdd()
+        btnStatus === 'Update' ? updateTaskContentById() : addNewTask()
         setBtnStatus('Add task')
         setInputTask('')
     }
 
-    function handleAdd() {
-        const newTask = { id: uuid(), task: inputTask, isDone: false }
-        setTaskList([...taskList, newTask])
+    function prepareEditTask(item) {
+        setTaskEdit(item)
+        setInputTask(item.task)
+        setBtnStatus('Update')
+        inputRef.current.focus()
     }
 
-    function handleToggleDone(id) {
-        setTaskList(taskList.map(item => {
-            return item.id === id ? { ...item, isDone: !item.isDone } : item
-        }))
+    async function getApiTasks() {
+        console.log('func getApiTasks')
+        try {
+            const res = await axios.get(URL_API_TASKS)
+            setTaskList(res.data)
+        } catch (error) {
+            console.error("Failed to fetch tasks", error)
+        }
     }
 
-    function handleDelete(id) {
-        setTaskList(taskList.filter(item => item.id !== id))
+    useEffect(() => {
+        getApiTasks()
+    }, [])
+
+    async function addNewTask() {
+        try {
+            const newTask = { id: uuid(), task: inputTask, isDone: false }
+            await axios.post(URL_API_TASKS, newTask)
+            getApiTasks()
+        } catch (error) {
+            console.error("Failed to add task", error)
+        }
     }
 
-    function handleEdit() {
-        setTaskList(taskList.map(item => {
-            return item.id === idEdit ? { ...item, task: inputTask } : item
-        }))
+    async function toggleTaskComple(item) {
+        await axios.patch(
+            `${URL_API_TASKS}/${item.id}`,
+            { ...item, isDone: !item.isDone }
+        )
+        getApiTasks()
+    }
+
+    async function deleteTaskById(id) {
+        await axios.delete(`${URL_API_TASKS}/${id}`)
+        getApiTasks()
+    }
+
+    async function updateTaskContentById() {
+        await axios.patch(
+            `${URL_API_TASKS}/${taskEdit.id}`,
+            { ...taskEdit, task: inputTask }
+        )
+        getApiTasks()
     }
 
     const value = {
         inputTask,
         setInputTask,
         taskList,
-        setTaskList,
         btnStatus,
         setBtnStatus,
-        handleToggleDone,
-        handleDelete,
-        handleEdit,
-        setIdEdit,
-        handleSubmit
+        toggleTaskComple,
+        deleteTaskById,
+        updateTaskContentById,
+        handleSubmit,
+        prepareEditTask,
+        inputRef
     }
 
     return (

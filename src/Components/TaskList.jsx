@@ -1,27 +1,21 @@
 import { Pagination } from 'antd'
-import { useContext, useState } from 'react'
+import { memo, useContext, useState } from 'react'
 import { TaskContext } from '../Context/TaskContext'
 
-export default function TaskList() {
+function TaskList() {
     const {
         taskList,
-        handleToggleDone,
-        handleDelete,
-        setIdEdit,
-        setBtnStatus,
-        setInputTask
+        toggleTaskComple,
+        deleteTaskById,
+        prepareEditTask
     } = useContext(TaskContext)
-
-    function handleClickEdit(item) {
-        setIdEdit(item.id)
-        setBtnStatus('Update')
-        setInputTask(item.task)
-    }
 
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 5
     const startIndex = (currentPage - 1) * itemsPerPage
     const data = taskList.slice(startIndex, currentPage * itemsPerPage)
+
+    console.log('comp TaskList')
 
 
     return taskList.length <= 0
@@ -36,13 +30,13 @@ export default function TaskList() {
                         </div>
                         <div className='flex items-center gap-1 text-white'>
                             <button className='py-1 px-2 bg-green-600 text-sm cursor-pointer'
-                                onClick={() => handleToggleDone(item.id)}
+                                onClick={() => toggleTaskComple(item)}
                             >{item.isDone ? 'Undo' : 'Done'}</button>
                             <button className='py-1 px-3 bg-red-600 text-sm cursor-pointer'
-                                onClick={() => handleDelete(item.id)}
+                                onClick={() => deleteTaskById(item.id)}
                             >X</button>
                             <button className='py-1 px-2 bg-yellow-500 text-sm cursor-pointer'
-                                onClick={() => handleClickEdit(item)}
+                                onClick={() => prepareEditTask(item)}
                             >Edit</button>
                         </div>
                     </li>
@@ -56,5 +50,6 @@ export default function TaskList() {
                 onChange={page => setCurrentPage(page)}
             />
         </>
-
 }
+
+export default memo(TaskList)
